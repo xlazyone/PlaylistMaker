@@ -51,7 +51,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("main") {
                         MainScreen(
+                            onSearchClick = { navController.navigate("search") }, // Переход на поиск
                             onSettingsClick = { navController.navigate("settings") }
+                        )
+                    }
+                    composable("search") {
+                        SearchScreen(
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
                     composable("settings") {
@@ -78,7 +84,10 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(onSettingsClick: () -> Unit) {
+fun MainScreen(
+    onSearchClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
     // Scaffold - это каркас экрана
     Scaffold(
         topBar = {
@@ -103,7 +112,9 @@ fun MainScreen(onSettingsClick: () -> Unit) {
                 .fillMaxSize()
         ) {
             // Передаем наши кнопки в список
-            MenuItem(icon = Icons.Default.Search, text = "Поиск") { /* TODO: Переход на экран поиска */ }
+            MenuItem(icon = Icons.Default.Search, text = "Поиск") {
+                onSearchClick()
+            }
             MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") { /* TODO */ }
             MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") { /* TODO */ }
             MenuItem(icon = Icons.Default.Settings, text = "Настройки") {
@@ -157,6 +168,9 @@ fun MenuItem(
 @Composable
 fun MainScreenPreview() {
     MaterialTheme {
-        MainScreen({})
+        MainScreen(
+            onSearchClick = {},
+            onSettingsClick = {}
+        )
     }
 }
