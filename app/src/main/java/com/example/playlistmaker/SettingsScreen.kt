@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +28,8 @@ fun SettingsScreen(
     onAgreementClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,14 +83,40 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.Default.Share,
                 text = "Поделиться приложением",
-                onClick = { /* TODO: Логика шаринга */ }
+                onClick = {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        // Ссылка на приложение (можешь заменить на любую)
+                        putExtra(Intent.EXTRA_TEXT, "https://practicum.yandex.ru/android-developer/")
+                    }
+                    // createChooser покажет системное окно выбора приложения
+                    context.startActivity(Intent.createChooser(shareIntent, "Поделиться приложением"))
+                }
             )
 
             // 3. Написать в поддержку
             SettingsItem(
                 icon = Icons.Default.SupportAgent,
                 text = "Написать в поддержку",
-                onClick = { /* TODO: Логика письма */ }
+                onClick = {
+                    val supportIntent = Intent(Intent.ACTION_SENDTO).apply {
+                        // mailto: означает, что мы хотим отправить email
+                        data = Uri.parse("mailto:")
+                        // Адрес получателя (замени на любой учебный email)
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf("student@yandex.ru"))
+                        // Тема письма
+                        putExtra(Intent.EXTRA_SUBJECT, "Сообщение разработчикам приложения Playlist Maker")
+                        // Текст письма
+                        putExtra(Intent.EXTRA_TEXT, "Привет, разработчикам!\n\nСпасибо за отличное приложение!")
+                    }
+                    // Проверяем, есть ли на устройстве почтовые клиенты, чтобы избежать вылета
+                    try {
+                        context.startActivity(supportIntent)
+                    } catch (e: Exception) {
+                        // Если почты нет, можно показать Toast (всплывающее сообщение)
+                        // Toast.makeText(context, "Нет приложения для отправки почты", Toast.LENGTH_SHORT).show()
+                    }
+                }
             )
 
             // 4. Пользовательское соглашение
