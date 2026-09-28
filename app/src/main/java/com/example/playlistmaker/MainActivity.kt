@@ -57,8 +57,27 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("search") {
                         SearchScreen(
-                            onBackClick = { navController.popBackStack() }
+                            onBackClick = { navController.popBackStack() },
+                            onTrackClick = { track ->
+                                // Переходим на экран деталей, передавая ID трека в URL
+                                navController.navigate("track_details/${track.trackId}")
+                            }
                         )
+                    }
+                    composable("track_details/{trackId}") { backStackEntry ->
+                        val trackId = backStackEntry.arguments?.getString("trackId")
+                        // Ищем трек в моках по ID
+                        val track = MockData.tracks.find { it.trackId == trackId }
+
+                        if (track != null) {
+                            TrackDetailsScreen(
+                                track = track,
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        } else {
+                            // Если трек не найден (например, ошибка), просто возвращаемся назад
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
                     }
                     composable("settings") {
                         SettingsScreen(

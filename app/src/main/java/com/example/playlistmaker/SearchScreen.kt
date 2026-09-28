@@ -1,5 +1,6 @@
 package com.example.playlistmaker
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,14 +10,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,11 +28,14 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(onBackClick: () -> Unit) {
+fun SearchScreen(
+    onBackClick: () -> Unit,
+    onTrackClick: (Track) -> Unit
+) {
     // Состояние для хранения текста поиска
     var searchQuery by remember { mutableStateOf("") }
 
-    // Состояние для истории поиска (пока пустой список)
+    // Состояние для истории поиска
     var searchHistory by remember { mutableStateOf(listOf<String>()) }
 
     // Контроллер для управления клавиатурой
@@ -64,7 +71,7 @@ fun SearchScreen(onBackClick: () -> Unit) {
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            // Поле ввода поискового запроса
+            // === 1. ПОЛЕ ВВОДА ===
             TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -103,24 +110,31 @@ fun SearchScreen(onBackClick: () -> Unit) {
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 ),
-                // Настраиваем клавиатуру: кнопка "Поиск" вместо "Enter"
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
                     onSearch = {
                         if (searchQuery.isNotEmpty()) {
-                            // Добавляем запрос в историю, если его там еще нет
                             if (!searchHistory.contains(searchQuery)) {
                                 searchHistory = listOf(searchQuery) + searchHistory
                             }
-                            // Скрываем клавиатуру
                             keyboardController?.hide()
-                            // TODO: Здесь позже будет запуск поиска по сети
                         }
                     }
                 )
             )
 
-            // Блок истории поиска. Показываем, только если поле пустое и история не пуста
+            // === 2. НОВЫЙ КОД: ФИЛЬТРАЦИЯ ТРЕКОВ ===
+            // Эта переменная вычисляется на лету при каждом изменении searchQuery
+            val filteredTracks = if (searchQuery.isNotEmpty()) {
+                MockData.tracks.filter { track ->
+                    track.trackName.contains(searchQuery, ignoreCase = true) ||
+                            track.artistName.contains(searchQuery, ignoreCase = true)
+                }
+            } else {
+                emptyList()
+            }
+
+            // === 3. ИСТОРИЯ ПОИСКА (показывается, если поле пустое) ===
             if (searchQuery.isEmpty() && searchHistory.isNotEmpty()) {
                 Row(
                     modifier = Modifier
@@ -143,12 +157,50 @@ fun SearchScreen(onBackClick: () -> Unit) {
                     }
                 }
 
-                // Список истории
                 LazyColumn {
                     items(searchHistory) { query ->
                         SearchHistoryItem(query = query) {
-                            // При клике на историю подставляем текст в поле поиска
                             searchQuery = query
+                        }
+                    }
+                }
+            }
+
+            // === 4. РЕЗУЛЬТАТЫ ПОИСКА ИЛИ ЗАГЛУШКА (показывается, если что-то введено) ===
+            if (searchQuery.isNotEmpty()) {
+                if (filteredTracks.isNotEmpty()) {
+                    // Есть совпадения — показываем список
+                    LazyColumn {
+                        items(filteredTracks) { track ->
+                            TrackItem(track = track) {
+                                onTrackClick(track)
+                            }
+                        }
+                    }
+                } else {
+                    // Нет совпадений — показываем заглушку по центру
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(120.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Ничего не нашлось",
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
                 }
@@ -181,10 +233,45 @@ fun SearchHistoryItem(query: String, onClick: () -> Unit) {
     }
 }
 
+@Composable
+fun TrackItem(track: Track, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = track.artworkResId),
+            contentDescription = null,
+            modifier = Modifier
+                .size(45.dp)
+                .clip(RoundedCornerShape(4.dp))
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp)
+        ) {
+            Text(text = track.trackName, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(text = "${track.artistName} • ${track.trackTime}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun SearchScreenPreview() {
     MaterialTheme {
-        SearchScreen(onBackClick = {})
+        SearchScreen(
+            onBackClick = {},
+            onTrackClick = {}
+        )
     }
 }
