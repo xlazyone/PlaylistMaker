@@ -20,13 +20,42 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                MainScreen()
+                // контроллер навигации
+                val navController = rememberNavController()
+
+                // NavHost - это контейнер, который хранит все экраны
+                NavHost(
+                    navController = navController,
+                    startDestination = "main" // Стартовый экран
+                ) {
+                    // Экран "Главный"
+                    composable("main") {
+                        MainScreen(
+                            onSettingsClick = {
+                                // Переход на экран настроек
+                                navController.navigate("settings")
+                            }
+                        )
+                    }
+                    // Экран "Настройки"
+                    composable("settings") {
+                        SettingsScreen(
+                            onBackClick = {
+                                // Возврат назад
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -34,7 +63,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(onSettingsClick: () -> Unit) {
     // Scaffold - это каркас экрана
     Scaffold(
         topBar = {
@@ -62,7 +91,9 @@ fun MainScreen() {
             MenuItem(icon = Icons.Default.Search, text = "Поиск") { /* TODO: Переход на экран поиска */ }
             MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") { /* TODO */ }
             MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") { /* TODO */ }
-            MenuItem(icon = Icons.Default.Settings, text = "Настройки") { /* TODO: Переход на экран настроек */ }
+            MenuItem(icon = Icons.Default.Settings, text = "Настройки") {
+                onSettingsClick()
+            }
         }
     }
 }
@@ -77,9 +108,9 @@ fun MenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() } // Обработка нажатия
-            .padding(horizontal = 16.dp, vertical = 16.dp), // Отступы внутри кнопки
-        verticalAlignment = Alignment.CenterVertically // Выравнивание по центру по вертикали
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // Иконка слева
         Icon(
@@ -111,6 +142,6 @@ fun MenuItem(
 @Composable
 fun MainScreenPreview() {
     MaterialTheme {
-        MainScreen()
+        MainScreen({})
     }
 }
