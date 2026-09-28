@@ -40,6 +40,11 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(sharedPrefs.getBoolean("dark_theme", false))
             }
 
+            // НОВОЕ: Создаем состояние истории на уровне всего приложения
+            var searchHistory by remember { mutableStateOf(listOf<String>()) }
+            // НОВОЕ: Создаем состояние поискового запроса тоже здесь, чтобы оно сохранялось
+            var searchQuery by remember { mutableStateOf("") }
+
             // 3. Передаем наше состояние в тему
             // (В файле Theme.kt обычно есть функция PlaylistMakerTheme, которая принимает darkTheme)
             PlaylistMakerTheme(darkTheme = isDarkTheme) {
@@ -57,9 +62,12 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("search") {
                         SearchScreen(
+                            searchQuery = searchQuery,           // Передаем запрос
+                            onSearchQueryChange = { searchQuery = it }, // Колбэк для изменения
+                            searchHistory = searchHistory,       // Передаем историю
+                            onHistoryChange = { searchHistory = it }, // Колбэк для изменения
                             onBackClick = { navController.popBackStack() },
                             onTrackClick = { track ->
-                                // Переходим на экран деталей, передавая ID трека в URL
                                 navController.navigate("track_details/${track.trackId}")
                             }
                         )

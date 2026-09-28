@@ -29,15 +29,13 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    searchHistory: List<String>,
+    onHistoryChange: (List<String>) -> Unit,
     onBackClick: () -> Unit,
     onTrackClick: (Track) -> Unit
 ) {
-    // Состояние для хранения текста поиска
-    var searchQuery by remember { mutableStateOf("") }
-
-    // Состояние для истории поиска
-    var searchHistory by remember { mutableStateOf(listOf<String>()) }
-
     // Контроллер для управления клавиатурой
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -74,7 +72,7 @@ fun SearchScreen(
             // === 1. ПОЛЕ ВВОДА ===
             TextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = { onSearchQueryChange(it) },
                 placeholder = {
                     Text(
                         text = "Поиск",
@@ -90,7 +88,7 @@ fun SearchScreen(
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Очистить",
@@ -115,7 +113,7 @@ fun SearchScreen(
                     onSearch = {
                         if (searchQuery.isNotEmpty()) {
                             if (!searchHistory.contains(searchQuery)) {
-                                searchHistory = listOf(searchQuery) + searchHistory
+                                onHistoryChange(listOf(searchQuery) + searchHistory) // Было: searchHistory = ...
                             }
                             keyboardController?.hide()
                         }
@@ -148,7 +146,7 @@ fun SearchScreen(
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
-                    TextButton(onClick = { searchHistory = emptyList() }) {
+                    TextButton(onClick = { onHistoryChange(emptyList()) }) {
                         Text(
                             text = "Очистить историю",
                             fontSize = 14.sp,
@@ -160,7 +158,7 @@ fun SearchScreen(
                 LazyColumn {
                     items(searchHistory) { query ->
                         SearchHistoryItem(query = query) {
-                            searchQuery = query
+                            onSearchQueryChange(query)
                         }
                     }
                 }
@@ -270,6 +268,10 @@ fun TrackItem(track: Track, onClick: () -> Unit) {
 fun SearchScreenPreview() {
     MaterialTheme {
         SearchScreen(
+            searchQuery = "",
+            onSearchQueryChange = {},
+            searchHistory = listOf("The Beatles", "Rammstein"),
+            onHistoryChange = {},
             onBackClick = {},
             onTrackClick = {}
         )
