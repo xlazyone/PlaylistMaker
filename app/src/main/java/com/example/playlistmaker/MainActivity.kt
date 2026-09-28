@@ -3,45 +3,114 @@ package com.example.playlistmaker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.playlistmaker.ui.theme.PlaylistMakerTheme
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            PlaylistMakerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            MaterialTheme {
+                MainScreen()
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun MainScreen() {
+    // Scaffold - это каркас экрана
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Playlist Maker",
+                        color = Color.White,
+                        fontSize = 22.sp
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF3772E7) // Синий цвет из макета
+                )
+            )
+        }
+    ) { paddingValues ->
+        // Column - это вертикальный список
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            // Передаем наши кнопки в список
+            MenuItem(icon = Icons.Default.Search, text = "Поиск") { /* TODO: Переход на экран поиска */ }
+            MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") { /* TODO */ }
+            MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") { /* TODO */ }
+            MenuItem(icon = Icons.Default.Settings, text = "Настройки") { /* TODO: Переход на экран настроек */ }
+        }
+    }
+}
+
+// Создаем свою функцию для одной кнопки меню, чтобы не дублировать код 4 раза
+@Composable
+fun MenuItem(
+    icon: ImageVector,
+    text: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() } // Обработка нажатия
+            .padding(horizontal = 16.dp, vertical = 16.dp), // Отступы внутри кнопки
+        verticalAlignment = Alignment.CenterVertically // Выравнивание по центру по вертикали
+    ) {
+        // Иконка слева
+        Icon(
+            imageVector = icon,
+            contentDescription = null, // Описание для доступности (пока null)
+            tint = Color.Black
+        )
+
+        // Текст посередине. weight(1f) заставляет его занять всё свободное место
+        Text(
+            text = text,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            fontSize = 16.sp,
+            color = Color.Black
+        )
+
+        // Стрелочка справа
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = Color.Gray
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    PlaylistMakerTheme {
-        Greeting("Android")
+fun MainScreenPreview() {
+    MaterialTheme {
+        MainScreen()
     }
 }
