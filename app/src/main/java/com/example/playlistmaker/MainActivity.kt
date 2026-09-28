@@ -56,12 +56,17 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("settings") {
                         SettingsScreen(
-                            isDarkTheme = isDarkTheme, // Передаем текущее состояние
+                            isDarkTheme = isDarkTheme,
                             onThemeChange = { newValue ->
-                                // Меняем состояние и сохраняем в память
                                 isDarkTheme = newValue
                                 sharedPrefs.edit().putBoolean("dark_theme", newValue).apply()
                             },
+                            onAgreementClick = { navController.navigate("agreement") }, // Переход на соглашение
+                            onBackClick = { navController.popBackStack() }
+                        )
+                    }
+                    composable("agreement") {
+                        AgreementScreen(
                             onBackClick = { navController.popBackStack() }
                         )
                     }

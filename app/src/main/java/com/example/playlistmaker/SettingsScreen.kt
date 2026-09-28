@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 fun SettingsScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
+    onAgreementClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
@@ -91,7 +92,7 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 text = "Пользовательское соглашение",
-                onClick = { /* TODO: Переход на экран соглашения */ }
+                onClick = onAgreementClick
             )
         }
     }
@@ -130,8 +131,9 @@ fun SettingsItem(
 @Composable
 fun SettingsScreenPreview() {
     SettingsScreen(
-        isDarkTheme = false, // Для превью ставим светлую тему
-        onThemeChange = {},   // Пустая лямбда (функция, которая ничего не делает)
-        onBackClick = {}      // Тоже пустая лямбда
+        isDarkTheme = false,
+        onThemeChange = {},
+        onAgreementClick = {},
+        onBackClick = {}
     )
 }
