@@ -23,36 +23,46 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.content.Context
+import androidx.compose.runtime.*
+import com.example.playlistmaker.ui.theme.PlaylistMakerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. Получаем доступ к хранилищу настроек
+        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
         setContent {
-            MaterialTheme {
-                // контроллер навигации
+            // 2. Создаем состояние темы. По умолчанию берем значение из настроек
+            var isDarkTheme by remember {
+                mutableStateOf(sharedPrefs.getBoolean("dark_theme", false))
+            }
+
+            // 3. Передаем наше состояние в тему
+            // (В файле Theme.kt обычно есть функция PlaylistMakerTheme, которая принимает darkTheme)
+            PlaylistMakerTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
 
-                // NavHost - это контейнер, который хранит все экраны
                 NavHost(
                     navController = navController,
-                    startDestination = "main" // Стартовый экран
+                    startDestination = "main"
                 ) {
-                    // Экран "Главный"
                     composable("main") {
                         MainScreen(
-                            onSettingsClick = {
-                                // Переход на экран настроек
-                                navController.navigate("settings")
-                            }
+                            onSettingsClick = { navController.navigate("settings") }
                         )
                     }
-                    // Экран "Настройки"
                     composable("settings") {
                         SettingsScreen(
-                            onBackClick = {
-                                // Возврат назад
-                                navController.popBackStack()
-                            }
+                            isDarkTheme = isDarkTheme, // Передаем текущее состояние
+                            onThemeChange = { newValue ->
+                                // Меняем состояние и сохраняем в память
+                                isDarkTheme = newValue
+                                sharedPrefs.edit().putBoolean("dark_theme", newValue).apply()
+                            },
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
                 }
@@ -116,7 +126,7 @@ fun MenuItem(
         Icon(
             imageVector = icon,
             contentDescription = null, // Описание для доступности (пока null)
-            tint = Color.Black
+            tint = MaterialTheme.colorScheme.onBackground
         )
 
         // Текст посередине. weight(1f) заставляет его занять всё свободное место
@@ -126,14 +136,14 @@ fun MenuItem(
                 .weight(1f)
                 .padding(start = 16.dp),
             fontSize = 16.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         // Стрелочка справа
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = Color.Gray
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

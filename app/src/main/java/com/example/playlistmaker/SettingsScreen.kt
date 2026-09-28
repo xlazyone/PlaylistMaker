@@ -19,14 +19,18 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBackClick: () -> Unit) {
+fun SettingsScreen(
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit,
+    onBackClick: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "Настройки",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground, // Цвет текста из темы
                         fontSize = 22.sp
                     )
                 },
@@ -35,12 +39,12 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Назад",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onBackground // Цвет иконки из темы
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.background // Цвет фона из темы
                 )
             )
         }
@@ -61,11 +65,11 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     text = "Темная тема",
                     modifier = Modifier.weight(1f),
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Switch(
-                    checked = false, // Пока выключено
-                    onCheckedChange = { /* TODO: Логика переключения */ }
+                    checked = isDarkTheme, // Берем значение из параметра
+                    onCheckedChange = onThemeChange // Вызываем функцию при переключении
                 )
             }
 
@@ -111,13 +115,13 @@ fun SettingsItem(
             text = text,
             modifier = Modifier.weight(1f),
             fontSize = 16.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color.Gray // Иконки в настройках обычно серые
+            tint = MaterialTheme.colorScheme.onSurfaceVariant // Серый цвет из темы
         )
     }
 }
@@ -125,5 +129,9 @@ fun SettingsItem(
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen(onBackClick = {})
+    SettingsScreen(
+        isDarkTheme = false, // Для превью ставим светлую тему
+        onThemeChange = {},   // Пустая лямбда (функция, которая ничего не делает)
+        onBackClick = {}      // Тоже пустая лямбда
+    )
 }
