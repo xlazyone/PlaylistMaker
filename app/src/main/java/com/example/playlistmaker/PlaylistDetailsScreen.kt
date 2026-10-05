@@ -23,15 +23,30 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun PlaylistDetailsScreen(
     playlist: Playlist,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onTrackClick: (Track) -> Unit // ДОБАВИЛИ новый параметр
 ) {
     // Находим реальные треки по их ID
     val tracks = playlist.trackIds.mapNotNull { id ->
         MockData.tracks.find { it.trackId == id }
     }
 
-    // Считаем общее время (заглушка: 3 минуты на трек)
-    val totalMinutes = tracks.size * 3
+    // Считаем общее время в секундах
+    val totalSeconds = tracks.sumOf { track ->
+        // Разбиваем строку "5:35" по символу ":"
+        val parts = track.trackTime.split(":")
+        val minutes = parts.getOrNull(0)?.toIntOrNull() ?: 0
+        val seconds = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        minutes * 60 + seconds
+    }
+
+    // Переводим секунды в минуты (округление вверх)
+    val totalMinutes = if (totalSeconds > 0) {
+        (totalSeconds + 59) / 60 // Округляем вверх
+    } else {
+        0
+    }
+
     val descriptionText = if (tracks.isEmpty()) {
         "Нет треков"
     } else {
@@ -135,7 +150,7 @@ fun PlaylistDetailsScreen(
             } else {
                 items(tracks) { track ->
                     TrackItem(track = track) {
-                        // TODO: Переход к деталям трека из плейлиста
+                        onTrackClick(track)
                     }
                 }
             }
@@ -149,7 +164,8 @@ fun PlaylistDetailsScreenPreview() {
     MaterialTheme {
         PlaylistDetailsScreen(
             playlist = MockData.initialPlaylists[0],
-            onBackClick = {}
+            onBackClick = {},
+            onTrackClick = {} // Заглушка
         )
     }
 }

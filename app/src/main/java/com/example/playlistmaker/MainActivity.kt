@@ -143,7 +143,11 @@ class MainActivity : ComponentActivity() {
                         if (playlist != null) {
                             PlaylistDetailsScreen(
                                 playlist = playlist,
-                                onBackClick = { navController.popBackStack() }
+                                onBackClick = { navController.popBackStack() },
+                                onTrackClick = { track ->
+                                    // Переходим на экран деталей трека (у нас уже есть такой маршрут!)
+                                    navController.navigate("track_details/${track.trackId}")
+                                }
                             )
                         } else {
                             LaunchedEffect(Unit) { navController.popBackStack() }
