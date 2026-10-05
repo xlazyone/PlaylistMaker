@@ -24,4 +24,21 @@ object MockData {
             artworkResId = R.drawable.cover_beatles_no_reply
         )
     )
+
+    val initialPlaylists = listOf(
+        Playlist(
+            id = "1",
+            name = "Best songs 2021",
+            description = "Мои любимые песни", // Пользовательское описание
+            coverResId = R.drawable.cover_beatles_yesterday,
+            trackIds = listOf("1", "2", "3") // Ссылаемся на ID треков из MockData.tracks
+        ),
+        Playlist(
+            id = "2",
+            name = "Summer Party",
+            description = "Для вечеринки",
+            coverResId = R.drawable.cover_beatles_here_comes_the_sun,
+            trackIds = listOf("2", "3")
+        )
+    )
 }

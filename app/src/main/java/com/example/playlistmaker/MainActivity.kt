@@ -44,6 +44,8 @@ class MainActivity : ComponentActivity() {
             var searchHistory by remember { mutableStateOf(listOf<String>()) }
             // НОВОЕ: Создаем состояние поискового запроса тоже здесь, чтобы оно сохранялось
             var searchQuery by remember { mutableStateOf("") }
+            // Состояние для списка плейлистов
+            var playlists by remember { mutableStateOf(MockData.initialPlaylists) }
 
             // 3. Передаем наше состояние в тему
             // (В файле Theme.kt обычно есть функция PlaylistMakerTheme, которая принимает darkTheme)
@@ -56,7 +58,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("main") {
                         MainScreen(
-                            onSearchClick = { navController.navigate("search") }, // Переход на поиск
+                            onSearchClick = { navController.navigate("search") },
+                            onPlaylistsClick = { navController.navigate("playlists") }, // <- ДОЛЖНО БЫТЬ
                             onSettingsClick = { navController.navigate("settings") }
                         )
                     }
@@ -103,6 +106,49 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { navController.popBackStack() }
                         )
                     }
+                    composable("playlists") {
+                        PlaylistsScreen(
+                            playlists = playlists,
+                            onBackClick = { navController.popBackStack() },
+                            onPlaylistClick = { playlist ->
+                                navController.navigate("playlist_details/${playlist.id}")
+                            },
+                            onCreatePlaylistClick = { navController.navigate("create_playlist") }
+                        )
+                    }
+                    composable("create_playlist") {
+                        CreatePlaylistScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onCreatePlaylist = { name, desc ->
+                                val newPlaylist = Playlist(
+                                    id = java.util.UUID.randomUUID().toString(),
+                                    name = name,
+                                    description = desc ?: "0 треков"
+                                )
+                                playlists = playlists + newPlaylist // Добавляем в список
+                                navController.popBackStack() // Возвращаемся назад
+                            }
+                        )
+                    }
+                    composable("main") {
+                        MainScreen(
+                            onSearchClick = { navController.navigate("search") },
+                            onPlaylistsClick = { navController.navigate("playlists") }, // НОВОЕ
+                            onSettingsClick = { navController.navigate("settings") }
+                        )
+                    }
+                    composable("playlist_details/{playlistId}") { backStackEntry ->
+                        val playlistId = backStackEntry.arguments?.getString("playlistId")
+                        val playlist = playlists.find { it.id == playlistId }
+                        if (playlist != null) {
+                            PlaylistDetailsScreen(
+                                playlist = playlist,
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
                 }
             }
         }
@@ -113,6 +159,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     onSearchClick: () -> Unit,
+    onPlaylistsClick: () -> Unit, // НОВЫЙ ПАРАМЕТР
     onSettingsClick: () -> Unit
 ) {
     // Scaffold - это каркас экрана
@@ -142,7 +189,9 @@ fun MainScreen(
             MenuItem(icon = Icons.Default.Search, text = "Поиск") {
                 onSearchClick()
             }
-            MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") { /* TODO */ }
+            MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") {
+                onPlaylistsClick()
+            }
             MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") { /* TODO */ }
             MenuItem(icon = Icons.Default.Settings, text = "Настройки") {
                 onSettingsClick()
@@ -197,6 +246,7 @@ fun MainScreenPreview() {
     MaterialTheme {
         MainScreen(
             onSearchClick = {},
+            onPlaylistsClick = {}, // Заглушка
             onSettingsClick = {}
         )
     }
