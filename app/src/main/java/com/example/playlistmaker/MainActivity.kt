@@ -46,6 +46,8 @@ class MainActivity : ComponentActivity() {
             var searchQuery by remember { mutableStateOf("") }
             // Состояние для списка плейлистов
             var playlists by remember { mutableStateOf(MockData.initialPlaylists) }
+            // Состояние для избранных треков (храним их ID)
+            var favoriteTrackIds by remember { mutableStateOf(setOf<String>()) }
 
             // 3. Передаем наше состояние в тему
             // (В файле Theme.kt обычно есть функция PlaylistMakerTheme, которая принимает darkTheme)
@@ -60,6 +62,7 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             onSearchClick = { navController.navigate("search") },
                             onPlaylistsClick = { navController.navigate("playlists") }, // <- ДОЛЖНО БЫТЬ
+                            onFavoritesClick = { navController.navigate("favorites") }, // НОВОЕ
                             onSettingsClick = { navController.navigate("settings") }
                         )
                     }
@@ -77,16 +80,38 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("track_details/{trackId}") { backStackEntry ->
                         val trackId = backStackEntry.arguments?.getString("trackId")
-                        // Ищем трек в моках по ID
                         val track = MockData.tracks.find { it.trackId == trackId }
 
                         if (track != null) {
                             TrackDetailsScreen(
                                 track = track,
-                                onBackClick = { navController.popBackStack() }
+                                isFavorite = favoriteTrackIds.contains(track.trackId),
+                                playlists = playlists,
+                                onBackClick = { navController.popBackStack() },
+                                onFavoriteClick = {
+                                    // Если трек уже в избранном — убираем, иначе — добавляем
+                                    favoriteTrackIds = if (favoriteTrackIds.contains(track.trackId)) {
+                                        favoriteTrackIds - track.trackId
+                                    } else {
+                                        favoriteTrackIds + track.trackId
+                                    }
+                                },
+                                onPlaylistClick = { playlist ->
+                                    // Добавляем ID трека в выбранный плейлист
+                                    playlists = playlists.map { p ->
+                                        if (p.id == playlist.id) {
+                                            if (!p.trackIds.contains(track.trackId)) {
+                                                p.copy(trackIds = p.trackIds + track.trackId)
+                                            } else {
+                                                p // Уже есть
+                                            }
+                                        } else {
+                                            p
+                                        }
+                                    }
+                                }
                             )
                         } else {
-                            // Если трек не найден (например, ошибка), просто возвращаемся назад
                             LaunchedEffect(Unit) { navController.popBackStack() }
                         }
                     }
@@ -133,7 +158,8 @@ class MainActivity : ComponentActivity() {
                     composable("main") {
                         MainScreen(
                             onSearchClick = { navController.navigate("search") },
-                            onPlaylistsClick = { navController.navigate("playlists") }, // НОВОЕ
+                            onPlaylistsClick = { navController.navigate("playlists") },
+                            onFavoritesClick = { navController.navigate("favorites") },
                             onSettingsClick = { navController.navigate("settings") }
                         )
                     }
@@ -153,6 +179,17 @@ class MainActivity : ComponentActivity() {
                             LaunchedEffect(Unit) { navController.popBackStack() }
                         }
                     }
+                    composable("favorites") {
+                        // Превращаем ID в объекты Track
+                        val favoriteTracks = MockData.tracks.filter { favoriteTrackIds.contains(it.trackId) }
+                        FavoritesScreen(
+                            favoriteTracks = favoriteTracks,
+                            onBackClick = { navController.popBackStack() },
+                            onTrackClick = { track ->
+                                navController.navigate("track_details/${track.trackId}")
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -163,7 +200,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     onSearchClick: () -> Unit,
-    onPlaylistsClick: () -> Unit, // НОВЫЙ ПАРАМЕТР
+    onPlaylistsClick: () -> Unit,
+    onFavoritesClick: () -> Unit, // НОВЫЙ ПАРАМЕТР
     onSettingsClick: () -> Unit
 ) {
     // Scaffold - это каркас экрана
@@ -196,7 +234,9 @@ fun MainScreen(
             MenuItem(icon = Icons.AutoMirrored.Filled.List, text = "Плейлисты") {
                 onPlaylistsClick()
             }
-            MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") { /* TODO */ }
+            MenuItem(icon = Icons.Default.FavoriteBorder, text = "Избранное") {
+                onFavoritesClick() // НОВОЕ
+            }
             MenuItem(icon = Icons.Default.Settings, text = "Настройки") {
                 onSettingsClick()
             }
@@ -250,7 +290,8 @@ fun MainScreenPreview() {
     MaterialTheme {
         MainScreen(
             onSearchClick = {},
-            onPlaylistsClick = {}, // Заглушка
+            onPlaylistsClick = {},
+            onFavoritesClick = {}, // Заглушка
             onSettingsClick = {}
         )
     }

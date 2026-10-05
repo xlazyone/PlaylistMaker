@@ -1,17 +1,22 @@
 package com.example.playlistmaker
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,12 +27,82 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun TrackDetailsScreen(
     track: Track,
-    onBackClick: () -> Unit
+    isFavorite: Boolean,
+    playlists: List<Playlist>,
+    onBackClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
+    onPlaylistClick: (Playlist) -> Unit
 ) {
+    // Состояние для показа нижнего модального окна
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    // Само нижнее модальное окно
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Text(
+                text = "Добавить в плейлист",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(playlists) { playlist ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onPlaylistClick(playlist)
+                                showBottomSheet = false // Закрываем окно после клика
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (playlist.coverResId != null) {
+                            Image(
+                                painter = painterResource(id = playlist.coverResId),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(45.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 12.dp)
+                        ) {
+                            Text(
+                                text = playlist.name,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${playlist.trackIds.size} треков",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                // Отступ снизу, чтобы последний элемент не прилипал к краю экрана
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { }, // На макете нет заголовка, только стрелка
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -56,13 +131,12 @@ fun TrackDetailsScreen(
                 contentDescription = "Обложка",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f) // Делаем квадрат
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp))
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Название трека
             Text(
                 text = track.trackName,
                 fontSize = 22.sp,
@@ -73,7 +147,6 @@ fun TrackDetailsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Имя исполнителя
             Text(
                 text = track.artistName,
                 fontSize = 16.sp,
@@ -83,14 +156,14 @@ fun TrackDetailsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Кнопки действий (Плейлист и Избранное)
+            // Кнопки действий
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Кнопка "Добавить в плейлист"
-                IconButton(onClick = { /* TODO: Логика добавления в плейлист */ }) {
+                IconButton(onClick = { showBottomSheet = true }) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Добавить в плейлист",
@@ -99,18 +172,18 @@ fun TrackDetailsScreen(
                 }
 
                 // Кнопка "Добавить в избранное"
-                IconButton(onClick = { /* TODO: Логика добавления в избранное */ }) {
+                IconButton(onClick = onFavoriteClick) {
                     Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Добавить в избранное",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        // Если в избранном — красим в красный, иначе — серый
+                        tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Длительность
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -136,7 +209,11 @@ fun TrackDetailsScreenPreview() {
     MaterialTheme {
         TrackDetailsScreen(
             track = MockData.tracks[0],
-            onBackClick = {}
+            isFavorite = false,
+            playlists = MockData.initialPlaylists,
+            onBackClick = {},
+            onFavoriteClick = {},
+            onPlaylistClick = {}
         )
     }
 }
